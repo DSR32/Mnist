@@ -3,6 +3,14 @@
 Created on Tue Sep 24 22:07:06 2024
 
 @author: divya
+
+This script intends to build a deep-learning model from scratch to classify the MNIST Data.
+A Multi-Layer Perceptron (MLP) is a feedforward artificial neural network consisting of multiple layers: 
+an input layer, one or more hidden layers, and an output layer. Each layer is fully connected to the next,
+and information flows from the input to the output. MLPs are typically used for supervised learning tasks like classification.
+
+In the context of our MLP classifier for the MNIST dataset, which consists of 28x28 grayscale images of digits (0–9),
+the goal is to classify each image into one of 10 possible categories (digits).
 """
 
 import numpy as np
@@ -25,7 +33,7 @@ class MLPClassifier:
         self.learning_rate = learning_rate
 
         # Random initialization of weights using a normal distribution (helps with symmetry breaking)
-        np.random.seed(42)  # Seed for reproducibility - another good practice
+        np.random.seed(42)  # Seed for reproducibility - It can be an random integer.
         self.W1 = np.random.randn(self.input_size, self.hidden_size) * np.sqrt(1. / self.input_size)
         self.b1 = np.zeros((1, self.hidden_size))  # Bias initialized to 0
         self.W2 = np.random.randn(self.hidden_size, self.output_size) * np.sqrt(1. / self.hidden_size)
@@ -42,8 +50,8 @@ class MLPClassifier:
 
     def softmax(self, Z):
         """
-        Softmax activation function. It converts raw output scores (logits) into probabilities 
-        that sum up to 1. This is why we use softmax in the output layer for classification tasks.
+        Softmax activation function. It converts raw output scores into probabilities that sum up to 1. 
+        This is why we use softmax in the output layer for classification tasks.
         """
         exp_Z = np.exp(Z - np.max(Z, axis=1, keepdims=True))  # Numerical stability trick
         return exp_Z / exp_Z.sum(axis=1, keepdims=True)
@@ -164,33 +172,36 @@ class MLPClassifier:
         accuracy = np.mean(predictions == np.argmax(y_true, axis=1)) * 100
         return accuracy
 
+def main():
+    # Load and preprocess the MNIST data
+    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+    
+    # Flatten the images from 28x28 to 784-dimensional vectors
+    X_train = X_train.reshape(-1, 28 * 28).astype('float32') / 255.0
+    X_test = X_test.reshape(-1, 28 * 28).astype('float32') / 255.0
+    
+    # One-hot encode the labels
+    one_hot = OneHotEncoder(sparse_output=False)
+    y_train = one_hot.fit_transform(y_train.reshape(-1, 1))
+    y_test = one_hot.transform(y_test.reshape(-1, 1))
+    
+    # Define the MLP architecture
+    input_size = 784    # Each image is 28x28, so we have 784 input neurons
+    hidden_size = 128   # Number of neurons in the hidden layer
+    output_size = 10    # There are 10 classes (digits 0-9)
+    
+    # Create an instance of MLPClassifier
+    mlp = MLPClassifier(input_size, hidden_size, output_size, learning_rate=0.01)
+    
+    # Train the MLP on the MNIST dataset
+    mlp.train(X_train, y_train, epochs=1000)
+    
+    # Evaluate the MLP's accuracy on the training and test sets
+    train_accuracy = mlp.accuracy(X_train, y_train)
+    test_accuracy = mlp.accuracy(X_test, y_test)
+    
+    print(f"Training Accuracy: {train_accuracy}%")
+    print(f"Test Accuracy: {test_accuracy}%")
 
-# Load and preprocess the MNIST data
-(X_train, y_train), (X_test, y_test) = mnist.load_data()
-
-# Flatten the images from 28x28 to 784-dimensional vectors
-X_train = X_train.reshape(-1, 28 * 28).astype('float32') / 255.0
-X_test = X_test.reshape(-1, 28 * 28).astype('float32') / 255.0
-
-# One-hot encode the labels
-one_hot = OneHotEncoder(sparse_output=False)
-y_train = one_hot.fit_transform(y_train.reshape(-1, 1))
-y_test = one_hot.transform(y_test.reshape(-1, 1))
-
-# Define the MLP architecture
-input_size = 784    # Each image is 28x28, so we have 784 input neurons
-hidden_size = 128   # Number of neurons in the hidden layer
-output_size = 10    # There are 10 classes (digits 0-9)
-
-# Create an instance of MLPClassifier
-mlp = MLPClassifier(input_size, hidden_size, output_size, learning_rate=0.01)
-
-# Train the MLP on the MNIST dataset
-mlp.train(X_train, y_train, epochs=1000)
-
-# Evaluate the MLP's accuracy on the training and test sets
-train_accuracy = mlp.accuracy(X_train, y_train)
-test_accuracy = mlp.accuracy(X_test, y_test)
-
-print(f"Training Accuracy: {train_accuracy}%")
-print(f"Test Accuracy: {test_accuracy}%")
+if __name__ == "__main__":
+    main()
